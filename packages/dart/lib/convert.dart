@@ -28,6 +28,12 @@ typedef _FreeStringDart = void Function(Pointer<Void> ptr);
 typedef _ResultFreeNative = Void Function(Pointer<Void> result);
 typedef _ResultFreeDart = void Function(Pointer<Void> result);
 
+typedef _OptionsFromJsonNative = Pointer<Void> Function(Pointer<Void> json);
+typedef _OptionsFromJsonDart = Pointer<Void> Function(Pointer<Void> json);
+
+typedef _OptionsFreeNative = Void Function(Pointer<Void> options);
+typedef _OptionsFreeDart = void Function(Pointer<Void> options);
+
 typedef _ClassifyNative = Pointer<Void> Function(Pointer<Uint8> bytes, IntPtr len);
 typedef _ClassifyDart = Pointer<Void> Function(Pointer<Uint8> bytes, int len);
 
@@ -36,13 +42,6 @@ typedef _ClassificationToJsonDart = Pointer<Void> Function(Pointer<Void> result)
 
 typedef _ClassificationFreeNative = Void Function(Pointer<Void> result);
 typedef _ClassificationFreeDart = void Function(Pointer<Void> result);
-
-// Options FFI
-typedef _OptionsFromJsonNative = Pointer<Void> Function(Pointer<Void> json);
-typedef _OptionsFromJsonDart = Pointer<Void> Function(Pointer<Void> json);
-
-typedef _OptionsFreeNative = Void Function(Pointer<Void> ptr);
-typedef _OptionsFreeDart = void Function(Pointer<Void> ptr);
 
 // =========================================================================
 // Bound function pointers
@@ -58,6 +57,11 @@ final _freeString = _nativeLib
     .lookupFunction<_FreeStringNative, _FreeStringDart>('pdfmd_free_string');
 final _resultFree = _nativeLib
     .lookupFunction<_ResultFreeNative, _ResultFreeDart>('pdfmd_result_free');
+final _optionsFromJson = _nativeLib
+    .lookupFunction<_OptionsFromJsonNative, _OptionsFromJsonDart>(
+        'pdfmd_options_from_json');
+final _optionsFree = _nativeLib
+    .lookupFunction<_OptionsFreeNative, _OptionsFreeDart>('pdfmd_options_free');
 final _classify = _nativeLib
     .lookupFunction<_ClassifyNative, _ClassifyDart>('pdfmd_classify');
 final _classificationToJson = _nativeLib.lookupFunction<
@@ -66,10 +70,6 @@ final _classificationToJson = _nativeLib.lookupFunction<
 final _classificationFree = _nativeLib
     .lookupFunction<_ClassificationFreeNative, _ClassificationFreeDart>(
         'pdfmd_classification_free');
-final _optionsFromJson = _nativeLib
-    .lookupFunction<_OptionsFromJsonNative, _OptionsFromJsonDart>('pdfmd_options_from_json');
-final _optionsFree = _nativeLib
-    .lookupFunction<_OptionsFreeNative, _OptionsFreeDart>('pdfmd_options_free');
 
 // =========================================================================
 // Helpers
@@ -149,7 +149,7 @@ PdfMarkdownResult convert(Uint8List pdfBytes,
   final jsonPtr = _resultToJson(resultPtr);
   if (jsonPtr == nullptr) {
     _resultFree(resultPtr);
-    throw PdfFfiException(0, 'result_to_json returned null');
+    throw const PdfFfiException(0, 'result_to_json returned null');
   }
 
   final jsonString = _readCString(jsonPtr);
@@ -181,7 +181,7 @@ PdfClassificationResult classify(Uint8List pdfBytes) {
   final jsonPtr = _classificationToJson(resultPtr);
   if (jsonPtr == nullptr) {
     _classificationFree(resultPtr);
-    throw PdfFfiException(0, 'classification_to_json returned null');
+    throw const PdfFfiException(0, 'classification_to_json returned null');
   }
 
   final jsonString = _readCString(jsonPtr);
