@@ -117,25 +117,46 @@ on the loader path (`DynamicLibrary.process()` / system library path).
 
 ### Android
 
+Prebuilt `.so` files are **shipped in the package** under `native/android/<abi>/`
+(arm64-v8a, armeabi-v7a, x86_64). Copy the one(s) you need into your app's
+jniLibs — the loader resolves `libpdf_to_markdown_ffi.so` from the Android
+jniLibs path at runtime:
+
+```bash
+# Copy from the package (or build from source below):
+cp packages/dart/native/android/arm64-v8a/libpdf_to_markdown_ffi.so \
+   <your-app>/android/app/src/main/jniLibs/arm64-v8a/
+cp packages/dart/native/android/armeabi-v7a/libpdf_to_markdown_ffi.so \
+   <your-app>/android/app/src/main/jniLibs/armeabi-v7a/
+cp packages/dart/native/android/x86_64/libpdf_to_markdown_ffi.so \
+   <your-app>/android/app/src/main/jniLibs/x86_64/
+```
+
+Build from source instead:
+
 ```bash
 cargo install cargo-ndk
 cd crates/pdf-to-markdown-rs-ffi
-cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 -o <your-app>/android/app/src/main/jniLibs build --release
-# → jniLibs/<abi>/libpdf_to_markdown_ffi.so
+ANDROID_NDK_HOME=$ANDROID_NDK_HOME cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 \
+  -o <your-app>/android/app/src/main/jniLibs build --release
 ```
 
 ### iOS
 
-Build on macOS for the device + simulator, then link into the Runner:
+iOS uses a **static library** linked into the app at build time (not dlopen'd).
+The prebuilt `.a` files are shipped in `native/ios/` — link them into the Runner
+(`ios/Runner/Frameworks` + Xcode link phase), then `NativeLibrary.instance`
+resolves the symbols via `DynamicLibrary.process()`.
+
+Build from source instead (on macOS):
 
 ```bash
 cd crates/pdf-to-markdown-rs-ffi
-cargo build --release --target aarch64-apple-ios
-cargo build --release --target aarch64-apple-ios-sim
+cargo build --release --target aarch64-apple-ios            # device
+cargo build --release --target aarch64-apple-ios-sim         # Apple Silicon sim
+cargo build --release --target x86_64-apple-ios              # Intel sim
+# → target/<triple>/release/libpdf_to_markdown_ffi.a
 ```
-
-Add the resulting static libs to `ios/Runner/Frameworks` and link them in the
-Xcode build phase.
 
 ## Native library resolution order
 

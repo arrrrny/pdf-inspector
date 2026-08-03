@@ -83,6 +83,14 @@ class NativeLibrary {
 
   /// Platform runtime identifier matching the `native/` subdirectory names
   /// (e.g. `macos-x64`, `linux-x64`, `windows-x64`). Null when unsupported.
+  ///
+  /// Android/iOS intentionally return null here: on those platforms the lib
+  /// is NOT dlopen'd from a bundled path.
+  ///   - Android: the app ships `libpdf_to_markdown_ffi.so` in
+  ///     `android/app/src/main/jniLibs/<abi>/`; `DynamicLibrary.open(name)`
+  ///     (step 4) resolves it from the jniLibs loader path.
+  ///   - iOS: the `.a` is statically linked into the app; `DynamicLibrary
+  ///     .process()` (step 3) finds the symbols.
   static String? _platformRid() {
     if (Platform.isMacOS) {
       return _is64Bit() ? 'macos-x64' : 'macos-arm64';

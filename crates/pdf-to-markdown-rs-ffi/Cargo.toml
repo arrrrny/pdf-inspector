@@ -7,7 +7,9 @@ license = "MIT"
 
 [lib]
 name = "pdf_to_markdown_ffi"
-crate-type = ["cdylib"]
+# cdylib for dlopen platforms (desktop, Android .so); staticlib for iOS
+# linking (NativeLibrary uses DynamicLibrary.process() for the linked symbols).
+crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
 pdf-inspector = { path = "../.." }
