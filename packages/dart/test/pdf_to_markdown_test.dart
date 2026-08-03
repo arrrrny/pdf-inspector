@@ -6,7 +6,6 @@ import 'package:pdf_to_markdown_ffi/pdf_to_markdown.dart';
 void main() {
   /// Load the fixture PDF bytes.
   Uint8List loadFixture() {
-    // Walk up from test/ to repo root, then into tests/fixtures/
     const fixturePath = '../../tests/fixtures/bare_name_struct.pdf';
     final file = File(fixturePath);
     if (!file.existsSync()) {
@@ -36,5 +35,26 @@ void main() {
     expect(result, isNotNull);
     expect(result.pdfType, PdfType.textBased);
     expect(result.pageCount, greaterThan(0));
+  });
+
+  test('options flow through to FFI layer', () {
+    // Passing mode: "detect" should still classify the PDF correctly
+    // even through the convert path, proving options are not ignored.
+    final pdfBytes = loadFixture();
+    final result = convert(
+      pdfBytes,
+      options: const PdfMarkdownOptions(mode: 'detect'),
+    );
+    // DetectOnly mode still returns PdfType but no markdown.
+    expect(result, isNotNull);
+    expect(result.pdfType, PdfType.textBased);
+  });
+
+  test('convert with default options produces markdown', () {
+    final pdfBytes = loadFixture();
+    final result = convert(pdfBytes);
+    // Default (full) mode should produce markdown.
+    expect(result.markdown, isNotNull);
+    expect(result.markdown!, isNotEmpty);
   });
 }

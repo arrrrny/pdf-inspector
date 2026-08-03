@@ -137,8 +137,6 @@ pub extern "C" fn pdfmd_convert(
     len: usize,
     options: *const PdfMarkdownOptions,
 ) -> *mut PdfMarkdownResult {
-    let _ = options; // Options are parsed from JSON; this pointer is unused for now.
-
     if bytes.is_null() && len > 0 {
         set_last_error(FfiErrorCode::InvalidInput, "bytes pointer is null but len > 0");
         return ptr::null_mut();
@@ -150,7 +148,20 @@ pub extern "C" fn pdfmd_convert(
         unsafe { std::slice::from_raw_parts(bytes, len) }
     };
 
-    let result = match pdf_inspector::process_pdf_mem(input) {
+    // Build PdfOptions from the opaque handle (or defaults if null).
+    let opts = if options.is_null() {
+        PdfOptions::new()
+    } else {
+        let handle = unsafe { &*options };
+        let mut opts = PdfOptions::new();
+        opts.mode = handle.mode.clone();
+        if let Some(ref pages) = handle.page_filter {
+            opts.page_filter = Some(pages.iter().copied().collect());
+        }
+        opts
+    };
+
+    let result = match pdf_inspector::process_pdf_mem_with_options(input, opts) {
         Ok(r) => r,
         Err(e) => {
             let (code, msg) = error::pdf_error_to_ffi(&e);
@@ -423,5 +434,19 @@ mod tests {
         let opts = pdfmd_options_from_json(bad.as_ptr());
         assert!(opts.is_null());
         assert_ne!(pdfmd_last_error_code(), 0);
+    }
+
+    #[test]
+    fn test_convert_with_detect_options_no_crash() {
+        let pdf = fixture_text_pdf();
+        // Create options handle with mode: "detect"
+        let json = std::ffi::CString::new(r#"{"mode":"detect"}"#).unwrap();
+        let opts_ptr = pdfmd_options_from_json(json.as_ptr());
+        assert!(!opts_ptr.is_null());
+        let result = pdfmd_convert(pdf.as_ptr(), pdf.len(), opts_ptr);
+        // DetectOnly should still return a valid result (with pdfType set)
+        assert!(!result.is_null());
+        pdfmd_options_free(opts_ptr);
+        pdfmd_result_free(result);
     }
 }

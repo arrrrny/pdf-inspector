@@ -37,6 +37,13 @@ typedef _ClassificationToJsonDart = Pointer<Void> Function(Pointer<Void> result)
 typedef _ClassificationFreeNative = Void Function(Pointer<Void> result);
 typedef _ClassificationFreeDart = void Function(Pointer<Void> result);
 
+// Options FFI
+typedef _OptionsFromJsonNative = Pointer<Void> Function(Pointer<Void> json);
+typedef _OptionsFromJsonDart = Pointer<Void> Function(Pointer<Void> json);
+
+typedef _OptionsFreeNative = Void Function(Pointer<Void> ptr);
+typedef _OptionsFreeDart = void Function(Pointer<Void> ptr);
+
 // =========================================================================
 // Bound function pointers
 // =========================================================================
@@ -59,6 +66,10 @@ final _classificationToJson = _nativeLib.lookupFunction<
 final _classificationFree = _nativeLib
     .lookupFunction<_ClassificationFreeNative, _ClassificationFreeDart>(
         'pdfmd_classification_free');
+final _optionsFromJson = _nativeLib
+    .lookupFunction<_OptionsFromJsonNative, _OptionsFromJsonDart>('pdfmd_options_from_json');
+final _optionsFree = _nativeLib
+    .lookupFunction<_OptionsFreeNative, _OptionsFreeDart>('pdfmd_options_free');
 
 // =========================================================================
 // Helpers
@@ -80,6 +91,17 @@ String _readCString(Pointer<Void> ptr) {
   return utf8.decode(buffer);
 }
 
+/// Marshal a Dart string to a null-terminated native C string.
+Pointer<Void> _toNativeString(String s) {
+  final units = utf8.encode(s);
+  final ptr = malloc<Uint8>(units.length + 1);
+  for (var i = 0; i < units.length; i++) {
+    ptr[i] = units[i];
+  }
+  ptr[units.length] = 0;
+  return ptr.cast();
+}
+
 // =========================================================================
 // Public API
 // =========================================================================
@@ -94,13 +116,31 @@ PdfMarkdownResult convert(Uint8List pdfBytes,
   final nativeBytes = malloc<Uint8>(pdfBytes.length);
   nativeBytes.asTypedList(pdfBytes.length).setAll(0, pdfBytes);
 
+  // Build native options handle when provided.
+  Pointer<Void> nativeOptions = nullptr;
+  if (options != null) {
+    final jsonStr = options.toJsonString();
+    final jsonPtr = _toNativeString(jsonStr);
+    nativeOptions = _optionsFromJson(jsonPtr);
+    malloc.free(jsonPtr.cast<Uint8>());
+    if (nativeOptions == nullptr) {
+      malloc.free(nativeBytes);
+      checkLastError();
+    }
+  }
+
   final resultPtr = _convert(
     nativeBytes,
     pdfBytes.length,
-    nullptr,
+    nativeOptions,
   );
 
+  // Free the byte buffer (always).
   malloc.free(nativeBytes);
+  // Free the options handle (if we created one).
+  if (nativeOptions != nullptr) {
+    _optionsFree(nativeOptions);
+  }
 
   if (resultPtr == nullptr) {
     checkLastError();
