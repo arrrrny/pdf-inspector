@@ -42,3 +42,5 @@ test_output/
 __pycache__/
 *.pyc
 .pytest_cache/
+packages/dart/.dart_tool/
+*.lock

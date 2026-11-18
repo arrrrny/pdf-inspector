@@ -1,0 +1,23 @@
+name: pdf_to_markdown_ffi
+description: On-device PDF to Markdown conversion via dart:ffi, wrapping the pdf-inspector Rust engine. Fast, structured Markdown (tables + columns) from a raw PDF byte buffer.
+version: 0.1.0
+homepage: https://github.com/arrrrny/pdf-inspector
+repository: https://github.com/arrrrny/pdf-inspector/tree/main/packages/dart
+issue_tracker: https://github.com/arrrrny/pdf-inspector/issues
+topics:
+  - pdf
+  - markdown
+  - ffi
+  - document
+  - conversion
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  ffi: ^2.1.0
+
+dev_dependencies:
+  ffigen: ^20.0.0
+  lints: ^5.0.0
+  test: ^1.25.0

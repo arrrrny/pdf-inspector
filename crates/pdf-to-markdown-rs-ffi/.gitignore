@@ -1,0 +1,8 @@
+target/
+.dart_tool/
+*.so
+*.dylib
+*.dll
+*.a
+pubspec.lock
+.DS_Store

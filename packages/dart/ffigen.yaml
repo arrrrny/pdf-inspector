@@ -1,0 +1,11 @@
+# Run: dart run ffigen
+# Only needed to regenerate bindings if the C header changes.
+# The actual bindings are hand-written in lib/native_library.dart + lib/convert.dart
+# to mirror the html_to_markdown_ffi pattern exactly.
+
+name: PdfToMarkdownBindings
+description: FFI bindings for pdf_to_markdown_ffi
+output: 'lib/pdf_to_markdown_bindings_generated.dart'
+headers:
+  entry-points:
+    - 'src/pdf_to_markdown.h'

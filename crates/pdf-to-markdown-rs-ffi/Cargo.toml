@@ -1,0 +1,17 @@
+[package]
+name = "pdf-to-markdown-rs-ffi"
+version = "0.1.0"
+edition = "2021"
+description = "C-ABI wrapper for pdf-inspector: on-device PDF to Markdown conversion"
+license = "MIT"
+
+[lib]
+name = "pdf_to_markdown_ffi"
+# cdylib for dlopen platforms (desktop, Android .so); staticlib for iOS
+# linking (NativeLibrary uses DynamicLibrary.process() for the linked symbols).
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+pdf-inspector = { path = "../.." }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
